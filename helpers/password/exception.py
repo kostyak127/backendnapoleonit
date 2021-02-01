@@ -1,13 +1,8 @@
-from sanic.exceptions import SanicException
-
-
-class PasswordException(SanicException):
+class GeneratePasswordHashException(Exception):
     status_code = 500
+    message = 'Can`t generate password'
 
 
-class GeneratePasswordHashException(PasswordException):
-    pass
-
-
-class CheckPasswordHashException(PasswordException):
-    pass
+class CheckPasswordHashException(Exception):
+    status_code = 403
+    message = 'Wrong password'

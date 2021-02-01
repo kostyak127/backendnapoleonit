@@ -10,4 +10,4 @@ class ApiValidationException(ValidationException):
 
 
 class ApiResponseValidationException(ValidationException):
-    status = 500
+    status_code = 500

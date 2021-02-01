@@ -28,5 +28,6 @@ class BaseModel(Base):
         default=datetime.datetime.utcnow,
         onupdate=datetime.datetime.utcnow
         )
+
     def __repr__(self):
         print(f'{self.__name__}')
