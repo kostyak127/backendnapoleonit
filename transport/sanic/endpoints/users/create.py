@@ -5,10 +5,10 @@ from api.request.user.create import RequestCreateUserDto
 from api.responses.user.create import ResponseCreateUserDto
 from db.database import DBSession
 from db.exceptions import DBDataException, DBIntegrityException, DBUserExistsException
-from helpers.password import generate_password
+from helpers.password.hash import generate_password
 from transport.sanic.endpoints import BaseEndpoint
 
-from db.queries import user as users_queries
+from db.queries import create_user
 from transport.sanic.exceptions import SanicUserExistsException
 
 
@@ -20,7 +20,7 @@ class CreateUserEndpoint(BaseEndpoint):
         hashed_password = generate_password(request_model.password)
 
         try:
-            db_user = users_queries.create_user(session, request_model, hashed_password)  # DB
+            db_user = create_user(session, request_model, hashed_password)  # DB
             session.commit_session()
         except DBUserExistsException as e:
             raise SanicUserExistsException(message=e.message)

@@ -6,7 +6,7 @@ from api.responses.user.get_info import ResponseGetUserInfoDto
 from api.responses.user.modify_info import ResponseModifyUserInfoDto
 from db.database import DBSession
 from db.exceptions import DBUserNotExistsException
-from db.queries.user import get_user, modify_user
+from db.queries.user import get_user, modify_user, check_user_exists
 from transport.sanic.endpoints import BaseEndpoint
 from transport.sanic.exceptions import SanicUserNotFoundException
 
@@ -17,10 +17,11 @@ class InfoUserEndpoint(BaseEndpoint):
     ) -> BaseHTTPResponse:
 
         if token.get('user_id') != user_id:
-            return await self.make_response_json(status=403)
+            return await self.make_response_json(status=403, message='Token not right')
 
+        db_user = get_user(session, user_id=user_id)
         try:
-            db_user = get_user(session, user_id=user_id)
+            check_user_exists(db_user)
         except DBUserNotExistsException as e:
             raise SanicUserNotFoundException(message=e.message)
 
@@ -37,11 +38,14 @@ class InfoUserEndpoint(BaseEndpoint):
 
         request_model = RequestModifyUserInfoDto(data=body)
 
+        db_user = get_user(session, user_id=user_id)
         try:
-            modified_user = modify_user(session, user_id=user_id, to_modify=request_model)
-            session.commit_session()
+            check_user_exists(db_user)
         except DBUserNotExistsException as e:
             raise SanicUserNotFoundException(message=e.message)
+        else:
+            modified_user = modify_user(session, user_id=user_id, to_modify=request_model)
+            session.commit_session()
 
         response_model = ResponseModifyUserInfoDto(modified_user)
         return await self.make_response_json(body=response_model.dump(), status=200)

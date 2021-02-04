@@ -22,25 +22,18 @@ def create_message(session: DBSession, message: RequestCreateMessageDto, sender_
 
 
 def get_user_messages(session: DBSession, user_id: int) -> List[DBMessage]:
-    user = get_user(session, user_id=user_id)
-
-    return session.get_user_messages(user_id)
+    messages = session.get_user_messages(user_id)
+    return messages if messages else []
 
 
 def get_message(session: DBSession, message_id: int) -> DBMessage:
     message = session.get_message_by_id(message_id)
-
-    if message is None or message.is_delete:
-        raise DBMessageNotExistsException
 
     return message
 
 
 def modify_message(session: DBSession, message_id: int, message_text: str) -> DBMessage:
     message = session.get_message_by_id(message_id)
-
-    if message is None or message.is_delete:
-        raise DBMessageNotExistsException
 
     message.message = message_text
 
@@ -50,9 +43,11 @@ def modify_message(session: DBSession, message_id: int, message_text: str) -> DB
 def delete_message(session: DBSession, message_id: int) -> DBMessage:
     message = session.get_message_by_id(message_id)
 
-    if message is None or message.is_delete:
-        raise DBMessageNotExistsException
-
     message.is_delete = True
 
     return message
+
+
+def check_message_exists(message: DBMessage):
+    if message is None or message.is_delete:
+        raise DBMessageNotExistsException

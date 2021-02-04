@@ -94,7 +94,7 @@ class SanicEndpoint:
     # Base Methods
 
     async def method_not_implemented(self, method: str):
-        return await self.make_response_json(status=500, message=f'Method{method.upper()} not implemented')
+        return await self.make_response_json(status=500, message=f'Method {method} not implemented')
 
     async def method_get(self, request: Request, body: dict, *args, **kwargs) -> BaseHTTPResponse:
         return await self.method_not_implemented(method='GET')

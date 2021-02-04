@@ -20,4 +20,3 @@ class SanicAuthException(SanicException):
 
 class SanicMessageNotFoundException(SanicException):
     status_code = 404
-    message = 'message not found'

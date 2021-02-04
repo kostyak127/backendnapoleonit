@@ -5,8 +5,8 @@ from api.request.message.modify import RequestModifyMessageDto
 from api.responses.message.message_info import ResponseMessageDto
 from db.database import DBSession
 from db.exceptions import DBMessageNotExistsException, DBUserNotExistsException
-from db.queries.message import get_message, modify_message, delete_message
-from db.queries.user import get_user
+from db.queries.message import get_message, modify_message, delete_message, check_message_exists
+from db.queries.user import get_user, check_user_exists
 from transport.sanic.endpoints import BaseEndpoint
 from transport.sanic.exceptions import SanicMessageNotFoundException, SanicUserNotFoundException
 
@@ -20,16 +20,17 @@ class MessageInfoEndpoint(BaseEndpoint):
     ) -> BaseHTTPResponse:
 
         request_user_id = token.get('user_id')
-
+        user = get_user(session, user_id=request_user_id)
         try:
-            get_user(session, user_id=request_user_id)
+            check_user_exists(user)
         except DBUserNotExistsException:
-            raise SanicUserNotFoundException
+            raise SanicUserNotFoundException(message='User not fround')
 
+        db_message = get_message(session, message_id)
         try:
-            db_message = get_message(session, message_id)
+            check_message_exists(db_message)
         except DBMessageNotExistsException:
-            raise SanicMessageNotFoundException
+            raise SanicMessageNotFoundException(message='message not found')
 
         if db_message.sender_id != request_user_id:
             return await self.make_response_json(status=403)
@@ -39,23 +40,27 @@ class MessageInfoEndpoint(BaseEndpoint):
         return await self.make_response_json(body=response_model.dump(), status=200)
 
     async def method_patch(
-        self, request: Request, body: dict, session: DBSession, token: dict, message_id: int, *args, **kwargs
+            self, request: Request, body: dict, session: DBSession, token: dict, message_id: int, *args, **kwargs
     ) -> BaseHTTPResponse:
 
         request_model = RequestModifyMessageDto(data=body)
         request_user_id = token.get('user_id')
+        user = get_user(session, user_id=request_user_id)
 
         try:
-            db_user = get_user(session, user_id=request_user_id)
+            check_user_exists(user)
         except DBUserNotExistsException:
-            raise SanicUserNotFoundException
+            raise SanicUserNotFoundException(message='Message not found')
 
+        db_message = get_message(session, message_id)
         try:
-            db_message = modify_message(session, message_id, request_model.message)
+            check_message_exists(db_message)
         except DBMessageNotExistsException:
-            raise SanicMessageNotFoundException
+            raise SanicMessageNotFoundException(message='Message not found')
+        else:
+            db_message = modify_message(session, message_id, request_model.message)
 
-        if db_message.sender_id != db_user.id:
+        if db_message.sender_id != user.id:
             return await self.make_response_json(status=403)
         else:
             session.commit_session()
@@ -69,18 +74,22 @@ class MessageInfoEndpoint(BaseEndpoint):
     ) -> BaseHTTPResponse:
 
         request_user_id = token.get('user_id')
+        user = get_user(session, user_id=request_user_id)
 
         try:
-            db_user = get_user(session, user_id=request_user_id)
+            check_user_exists(user)
         except DBUserNotExistsException:
-            raise SanicUserNotFoundException
+            raise SanicUserNotFoundException(message='User not found')
 
+        db_message = get_message(session, message_id)
         try:
-            db_message = delete_message(session, message_id)
+            check_message_exists(db_message)
         except DBMessageNotExistsException:
-            raise SanicMessageNotFoundException
+            raise SanicMessageNotFoundException(message='Message not found')
+        else:
+            db_message = delete_message(session, message_id)
 
-        if db_message.sender_id != db_user.id:
+        if db_message.sender_id != user.id:
             return await self.make_response_json(status=403)
         else:
             session.commit_session()

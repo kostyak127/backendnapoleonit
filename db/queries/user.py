@@ -25,16 +25,11 @@ def get_user(session: DBSession, *, login: str = None, user_id: int = None) -> D
     else:
         user = session.get_user_by_id(user_id)
 
-    if user is None or user.is_delete:
-        raise DBUserNotExistsException
-
     return user
 
 
-def modify_user(session: DBSession, *, to_modify: RequestModifyUserInfoDto, user_id: int):
+def modify_user(session: DBSession, *, to_modify: RequestModifyUserInfoDto, user_id: int) -> DBUser:
     db_user = session.get_user_by_id(user_id)
-    if db_user is None or db_user.is_delete:
-        raise DBUserNotExistsException
 
     for attr in to_modify.fields:
         value = getattr(to_modify, attr)
@@ -43,11 +38,13 @@ def modify_user(session: DBSession, *, to_modify: RequestModifyUserInfoDto, user
     return db_user
 
 
-def delete_user(session: DBSession, user_id: int):
+def delete_user(session: DBSession, user_id: int) -> DBUser:
     db_user = session.get_user_by_id(user_id)
-    if db_user is None or db_user.is_delete:
-        raise DBUserNotExistsException
-
     db_user.is_delete = True
 
     return db_user
+
+
+def check_user_exists(user: DBUser):
+    if user is None or user.is_delete:
+        raise DBUserNotExistsException

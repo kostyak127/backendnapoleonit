@@ -5,9 +5,9 @@ from api.request.user.auth import RequestAuthUserDto
 from api.responses.user.auth import AuthUserResponseObject, ResponseAuthUserDto
 from db.database import DBSession
 from db.exceptions import DBUserNotExistsException
-from db.queries.user import get_user
-from helpers.password import check_hash
+from db.queries.user import check_user_exists, get_user
 from helpers.password.exception import CheckPasswordHashException
+from helpers.password.hash import check_hash
 from helpers.token.token import create_token
 from transport.sanic.endpoints import BaseEndpoint
 from transport.sanic.exceptions import SanicUserNotFoundException, SanicPasswordException
@@ -18,8 +18,9 @@ class AuthUserEndpoint(BaseEndpoint):
 
         request_model = RequestAuthUserDto(data=body)
 
+        db_user = get_user(session, login=request_model.login)
         try:
-            db_user = get_user(session, login=request_model.login)
+            check_user_exists(db_user)
         except DBUserNotExistsException as e:
             raise SanicUserNotFoundException(message=e.message)
 

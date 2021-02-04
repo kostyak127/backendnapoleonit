@@ -46,7 +46,6 @@ class DBSession:
         return self._session.query(DBUser).filter(DBUser.id == user_id).first()
 
     def get_user_messages(self, user_id: int) -> List[DBMessage]:
-        print(DBMessage.is_delete)
         return self._session.query(DBMessage).filter((DBMessage.is_delete == 0)
                     and (DBMessage.sender_id == user_id or DBMessage.recipient_id == user_id)).all()
 
@@ -65,7 +64,6 @@ class Database:
 
     def check_connection(self):
         self.connection.execute(self._test_query).fetchone()
-        print('connected')
 
     def make_session(self) -> DBSession:
         session = self.session_factory()

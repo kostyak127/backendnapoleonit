@@ -5,8 +5,9 @@ import jwt
 from helpers.token.exceptions import ReadTokenException
 
 
-def create_token(payload: dict, secret: str) -> str:
-    payload['exp'] = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+def create_token(data: dict, secret: str, lifetime: int = 1) -> str:
+    payload = {'exp': datetime.datetime.utcnow() + datetime.timedelta(days=lifetime)}
+    payload.update(data)
     return jwt.encode(payload, secret, algorithm='HS256')
 
 
